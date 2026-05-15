@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aula 19 — República Velha</title>
+<style>
+  :root {
+    --bg: #F4EFE6;
+    --bg-deep: #1A1814;
+    --ink: #1A1814;
+    --ink-soft: #4A4640;
+    --paper: #FBF7EF;
+    --accent: #B8862F;
+    --accent-soft: #E8C77A;
+    --line: rgba(26,24,20,0.12);
+    --correct: #2E7D4F;
+    --wrong: #B5342B;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .app {
+    position: fixed;
+    inset: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .progress {
+    position: absolute;
+    top: 10px; left: 12px; right: 12px;
+    height: 18px;
+    display: flex;
+    gap: 2px;
+    z-index: 50;
+    align-items: center;
+    cursor: pointer;
+  }
+  .seg {
+    flex: 1;
+    height: 3px;
+    background: rgba(26,24,20,0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+    transition: height 0.2s ease;
+  }
+  .seg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+  .seg.done::after { transform: scaleX(1); }
+  .seg.current::after { transform: scaleX(1); }
+  .seg.current { height: 4px; }
+
+  .header {
+    position: absolute;
+    top: 34px; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 40;
+    pointer-events: none;
+  }
+  .header span {
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .slides { position: absolute; inset: 0; }
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 80px 28px 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+    overflow-y: auto;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .slide.prev { transform: translateX(-40px); }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(28px, 8vw, 38px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  h1 em, h2 em {
+    font-style: italic;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(24px, 7vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin-bottom: 14px;
+  }
+  h3 {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  p {
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  p + p { margin-top: 14px; }
+  .big {
+    font-family: var(--serif);
+    font-size: clamp(22px, 6.5vw, 28px);
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 18px;
+    margin: 8px 0;
+  }
+  .number {
+    font-family: var(--serif);
+    font-size: 88px;
+    font-weight: 800;
+    line-height: 0.9;
+    color: var(--accent);
+    letter-spacing: -0.04em;
+  }
+  .label {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .slide.active > * {
+    animation: fadeUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
+  }
+  .slide.active > *:nth-child(1) { animation-delay: 0.05s; }
+  .slide.active > *:nth-child(2) { animation-delay: 0.18s; }
+  .slide.active > *:nth-child(3) { animation-delay: 0.31s; }
+  .slide.active > *:nth-child(4) { animation-delay: 0.44s; }
+  .slide.active > *:nth-child(5) { animation-delay: 0.57s; }
+  .slide.active > *:nth-child(6) { animation-delay: 0.70s; }
+  .slide.active > *:nth-child(7) { animation-delay: 0.83s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tap-zone {
+    position: absolute;
+    top: 60px; bottom: 0;
+    width: 35%;
+    z-index: 30;
+    cursor: pointer;
+  }
+  .tap-zone.left { left: 0; }
+  .tap-zone.right { right: 0; }
+
+  .footer-hint {
+    position: absolute;
+    bottom: 18px; left: 0; right: 0;
+    text-align: center;
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    opacity: 0.6;
+    z-index: 20;
+    pointer-events: none;
+  }
+  .footer-hint .arrow {
+    display: inline-block;
+    animation: nudge 2s ease-in-out infinite;
+  }
+  @keyframes nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+
+  .illu {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto 18px;
+    display: block;
+  }
+  .illu.sm { max-width: 180px; }
+  .illu.lg { max-width: 320px; }
+  .illu svg { width: 100%; height: auto; display: block; }
+
+  .draw path, .draw line, .draw circle, .draw rect, .draw polygon, .draw polyline {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: draw 1.6s 0.3s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+  }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  .cover {
+    background: var(--bg-deep);
+    color: var(--paper);
+  }
+  .cover h1 { color: var(--paper); }
+  .cover .eyebrow { color: var(--accent-soft); }
+  .cover p { color: rgba(251,247,239,0.7); }
+  .cover .footer-hint { color: rgba(251,247,239,0.5); }
+
+  .quiz-intro { text-align: center; }
+  .quiz-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--paper);
+    animation: popIn 0.6s 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .question-num {
+    font-family: var(--sans);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .question {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.3;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .option:active { transform: scale(0.98); }
+  .option .letter {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 1px;
+    transition: all 0.2s ease;
+  }
+  .option.correct {
+    background: rgba(46, 125, 79, 0.08);
+    border-color: var(--correct);
+    color: var(--correct);
+  }
+  .option.correct .letter {
+    background: var(--correct);
+    color: white;
+    border-color: var(--correct);
+  }
+  .option.wrong {
+    background: rgba(181, 52, 43, 0.06);
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
+  .option.wrong .letter {
+    background: var(--wrong);
+    color: white;
+    border-color: var(--wrong);
+  }
+  .option.disabled { pointer-events: none; opacity: 0.55; }
+
+  .feedback {
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  .feedback.show {
+    opacity: 1;
+    max-height: 400px;
+  }
+  .feedback.right {
+    background: rgba(46, 125, 79, 0.08);
+    color: var(--correct);
+    border: 1px solid rgba(46, 125, 79, 0.2);
+  }
+  .feedback.miss {
+    background: rgba(181, 52, 43, 0.06);
+    color: var(--ink);
+    border: 1px solid rgba(181, 52, 43, 0.2);
+  }
+  .feedback strong { font-weight: 700; }
+  .feedback .head {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+    margin-bottom: 6px;
+    display: block;
+    font-weight: 600;
+  }
+
+  .end {
+    background: var(--bg-deep);
+    color: var(--paper);
+    text-align: center;
+  }
+  .end h2 { color: var(--paper); }
+  .end p { color: rgba(251,247,239,0.7); }
+  .end .score {
+    font-family: var(--serif);
+    font-size: 72px;
+    font-weight: 800;
+    color: var(--accent-soft);
+    line-height: 1;
+    margin: 20px 0;
+  }
+  .restart {
+    margin-top: 28px;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    padding: 14px 28px;
+    border-radius: 100px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .restart:active { transform: scale(0.96); }
+
+  .slide::-webkit-scrollbar { display: none; }
+  .slide { scrollbar-width: none; }
+
+  .card-soft {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .stamp {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+  .stamp.dark {
+    background: var(--bg-deep);
+    color: var(--accent-soft);
+  }
+  .stamp.red {
+    background: var(--wrong);
+  }
+
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .pillar {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .pillar svg { width: 36px; height: 36px; margin: 0 auto 6px; display: block; }
+  .pillar .name {
+    font-family: var(--serif);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="progress" id="progress"></div>
+  <div class="header">
+    <span>Aula 19</span>
+    <span id="counter">1 / 1</span>
+  </div>
+
+  <div class="slides" id="slides">
+
+    <!-- 1 CAPA -->
+    <section class="slide cover active">
+      <div class="eyebrow">História · Aula 19</div>
+      <h1>O Brasil dos <em>coronéis</em>.</h1>
+      <p style="margin-top: 16px;">Café, voto de cabresto e a República que era democracia só no papel.</p>
+      <div class="illu" style="margin-top: 36px;">
+        <svg viewBox="0 0 240 140" class="draw" fill="none" stroke="#E8C77A" stroke-width="1.5">
+          <!-- xícara de café -->
+          <path d="M40 70 L40 110 Q40 120 50 120 L90 120 Q100 120 100 110 L100 70 Z"/>
+          <path d="M100 80 Q120 80 120 95 Q120 110 100 110"/>
+          <path d="M55 60 Q55 50 65 50 M70 60 Q70 50 80 50 M85 60 Q85 50 95 50"/>
+          <!-- vaca/leite -->
+          <ellipse cx="170" cy="95" rx="35" ry="22"/>
+          <circle cx="155" cy="88" r="3" fill="#E8C77A"/>
+          <circle cx="180" cy="88" r="3" fill="#E8C77A"/>
+          <path d="M150 110 L150 120 M165 115 L165 122 M180 115 L180 122 M195 110 L195 120"/>
+          <path d="M200 85 L210 75"/>
+          <!-- + sinal -->
+          <path d="M125 50 L135 50 M130 45 L130 55" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="footer-hint">toque na lateral pra avançar <span class="arrow">→</span></div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide">
+      <p class="big">Oi.</p>
+      <p style="margin-top: 18px;">Lembra que na aula passada o Brasil virou República?</p>
+      <p>Dom Pedro II foi embora de navio. Bandeira nova. Tudo lindo.</p>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide">
+      <p>Agora a pergunta que ninguém faz:</p>
+      <p class="big" style="margin-top: 14px;">A vida do brasileiro <em>melhorou</em>?</p>
+      <p style="margin-top: 16px; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--accent);">Resposta curta: não.</p>
+      <p>Resposta longa: é hoje.</p>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide">
+      <div class="eyebrow">1889 a 1930</div>
+      <h2>A <em>República Velha</em>.</h2>
+      <p style="margin-top: 14px;">41 anos.</p>
+      <p>E é aqui que nasce o <strong>DNA da política brasileira</strong> que a gente vive até hoje.</p>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide">
+      <p>Liga isso:</p>
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">Pequenos grupos ricos no controle.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">Estado protegendo negócio privado.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">Fraude na eleição como regra.</div>
+        <div style="padding: 12px 14px; background: var(--paper); border-radius: 10px; font-size: 15px;">Violência contra pobre como método.</div>
+      </div>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; color: var(--accent);">Tudo isso. Inventado aqui.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide">
+      <div class="eyebrow">Primeira pergunta</div>
+      <p>Quem fez essa República nascer?</p>
+      <p class="big" style="margin-top: 14px;">O povo na rua?</p>
+      <p style="margin-top: 12px; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--accent);">Zero.</p>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide">
+      <p>Foi um <strong>marechal</strong> dando golpe.</p>
+      <p>Com apoio de <strong>fazendeiros de café</strong> que tavam de saco cheio do imperador.</p>
+      <div class="illu sm" style="margin: 20px auto;">
+        <svg viewBox="0 0 140 80" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <!-- soldado -->
+          <circle cx="40" cy="25" r="10"/>
+          <path d="M40 35 L40 60 M30 45 L50 45 M30 60 L40 75 M50 60 L40 75"/>
+          <path d="M35 15 L45 15 L45 20 L35 20 Z"/>
+          <!-- + -->
+          <path d="M65 40 L75 40 M70 35 L70 45" stroke-width="2"/>
+          <!-- saco de dinheiro -->
+          <path d="M95 35 L115 35 L120 65 L90 65 Z"/>
+          <text x="98" y="55" font-family="Georgia" font-size="14" fill="#B8862F" font-weight="700">$</text>
+        </svg>
+      </div>
+      <p>O povo? Segundo o jornalista da época, "<em>assistiu bestializado, sem saber o que significava</em>".</p>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide">
+      <p class="quote">No papel, a Constituição de 1891 era linda. Copiou o modelo americano.</p>
+      <p style="margin-top: 18px;">Na prática?</p>
+      <p class="big" style="margin-top: 8px;">Um monstro.</p>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide">
+      <p>Os estados ficaram <strong>super-poderosos</strong>.</p>
+      <p style="margin-top: 12px;">Cada um com:</p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Sua própria polícia.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Seu próprio dinheiro.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Seu próprio imposto sobre exportação.</div>
+      </div>
+      <p style="margin-top: 14px;">Mandando no governo federal.</p>
+    </section>
+
+    <!-- 10 dica estratégica -->
+    <section class="slide">
+      <div class="eyebrow">Guarda essa</div>
+      <p class="quote">Quando ler uma lei ou um contrato, não pergunta "o que tá escrito?". Pergunta "<em>quem ganha poder com isso?</em>".</p>
+      <p style="margin-top: 16px;">Os cafeicultores escreveram a Constituição que protegia… o café deles.</p>
+      <p style="margin-top: 10px; font-family: var(--serif); font-style: italic; color: var(--accent);">Coincidência? Nunca é.</p>
+    </section>
+
+    <!-- 11 FASE 1 -->
+    <section class="slide">
+      <div class="number">01</div>
+      <div class="label" style="margin-top: 8px;">Primeira fase · 1889–1894</div>
+      <h2 style="margin-top: 12px;">A República da <em>Espada</em>.</h2>
+      <div class="illu" style="margin-top: 20px; max-width: 200px;">
+        <svg viewBox="0 0 200 100" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M40 80 L130 30"/>
+          <path d="M125 25 L140 20 L135 35 Z"/>
+          <rect x="30" y="78" width="20" height="8" rx="2"/>
+          <path d="M50 82 L55 75 M55 82 L60 75"/>
+        </svg>
+      </div>
+      <p>Os dois primeiros presidentes? <strong>Militares</strong>.</p>
+      <p style="margin-top: 8px; font-size: 15px; color: var(--ink-soft);">Deodoro e Floriano.</p>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide">
+      <p>Foi um período <strong>bagunçado</strong>.</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Deodoro fechou o Congresso.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Marinha se rebelou.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Guerra civil no sul.</div>
+      </div>
+    </section>
+
+    <!-- 13 Revolução Federalista -->
+    <section class="slide">
+      <div class="eyebrow">Sul · 1893–1895</div>
+      <p>No Rio Grande do Sul, dois grupos se mataram numa guerra civil.</p>
+      <p class="big" style="margin-top: 14px;"><em>Maragatos</em> contra <em>chimangos</em>.</p>
+      <p style="margin-top: 14px;">Resultado?</p>
+      <div style="text-align: center; margin-top: 14px;">
+        <div class="number" style="font-size: 56px;">10 mil</div>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">mortos.</p>
+      </div>
+    </section>
+
+    <!-- 14 -->
+    <section class="slide">
+      <p>E olha o método:</p>
+      <p class="big" style="margin-top: 12px;">Degola.</p>
+      <p style="margin-top: 14px;">Prisioneiro era morto <strong>a faca, no pescoço</strong>.</p>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; color: var(--accent);">A República nova começou no sangue.</p>
+    </section>
+
+    <!-- 15 Floriano -->
+    <section class="slide">
+      <p>Floriano consolidou tudo <strong>na bala</strong>.</p>
+      <p style="margin-top: 12px;">Apelido?</p>
+      <p class="big" style="margin-top: 8px; color: var(--accent);">"Marechal de Ferro".</p>
+      <p style="margin-top: 14px;">Em 1894 passa o cargo pro primeiro civil.</p>
+      <p style="margin-top: 8px;">Prudente de Morais. Paulista. <strong>Cafeicultor</strong>.</p>
+      <p style="margin-top: 10px; font-size: 14px; color: var(--ink-soft); font-style: italic;">(começa a ver o padrão?)</p>
+    </section>
+
+    <!-- 16 FASE 2 -->
+    <section class="slide">
+      <div class="number">02</div>
+      <div class="label" style="margin-top: 8px;">Fase que importa de verdade</div>
+      <h2 style="margin-top: 12px;">A República <em>Oligárquica</em>.</h2>
+      <p style="margin-top: 14px; font-size: 15px;"><strong>Oligarquia</strong> = pouca gente concentrando todo o poder.</p>
+      <p style="margin-top: 10px; font-style: italic; color: var(--ink-soft);">Do grego: <em>oligos</em> (poucos) + <em>arkhé</em> (poder).</p>
+    </section>
+
+    <!-- 17 -->
+    <section class="slide">
+      <p>Aqui você precisa entender <strong>três engrenagens</strong>.</p>
+      <div class="pillar-grid">
+        <div class="pillar">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <circle cx="12" cy="18" r="6"/>
+            <circle cx="24" cy="18" r="6"/>
+          </svg>
+          <div class="name">Café com leite</div>
+        </div>
+        <div class="pillar">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <rect x="6" y="12" width="24" height="14" rx="2"/>
+            <path d="M12 12 L12 26 M18 12 L18 26 M24 12 L24 26"/>
+          </svg>
+          <div class="name">Governadores</div>
+        </div>
+        <div class="pillar">
+          <svg viewBox="0 0 36 36" fill="none" stroke="#B8862F" stroke-width="1.5">
+            <circle cx="18" cy="14" r="5"/>
+            <path d="M10 30 Q18 22 26 30"/>
+            <path d="M14 30 L14 34 M22 30 L22 34"/>
+          </svg>
+          <div class="name">Coronel</div>
+        </div>
+      </div>
+      <p style="margin-top: 16px; font-family: var(--serif); font-style: italic; color: var(--accent);">Entendeu as três, entendeu tudo.</p>
+    </section>
+
+    <!-- 18 ENGRENAGEM 1 -->
+    <section class="slide">
+      <span class="stamp">Engrenagem 1</span>
+      <h2 style="margin-top: 14px;">Política do <em>café com leite</em>.</h2>
+    </section>
+
+    <!-- 19 -->
+    <section class="slide">
+      <p>Naquela época, o Brasil produzia…</p>
+      <div style="text-align: center; margin: 20px 0;">
+        <div class="number">3/4</div>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">de todo o café do mundo.</p>
+      </div>
+      <p class="big">Café era o nosso petróleo.</p>
+    </section>
+
+    <!-- 20 -->
+    <section class="slide">
+      <p>E quem produzia café?</p>
+      <p class="big" style="margin-top: 12px; color: var(--accent);">São Paulo.</p>
+      <p style="margin-top: 18px;">E quem tinha mais eleitor no país?</p>
+      <p class="big" style="margin-top: 12px; color: var(--accent);">Minas Gerais.</p>
+    </section>
+
+    <!-- 21 -->
+    <section class="slide">
+      <p>Aí os dois fizeram um <strong>combinado</strong>.</p>
+      <div class="illu" style="margin: 20px auto; max-width: 240px;">
+        <svg viewBox="0 0 240 80" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <circle cx="50" cy="40" r="22"/>
+          <text x="34" y="44" font-family="Georgia" font-size="11" fill="#B8862F">Café</text>
+          <path d="M80 35 L160 35" stroke-dasharray="3 3"/>
+          <path d="M155 30 L160 35 L155 40"/>
+          <path d="M160 45 L80 45" stroke-dasharray="3 3"/>
+          <path d="M85 40 L80 45 L85 50"/>
+          <circle cx="190" cy="40" r="22"/>
+          <text x="175" y="44" font-family="Georgia" font-size="11" fill="#B8862F">Leite</text>
+        </svg>
+      </div>
+      <p>"Um indica o presidente. Depois o outro indica. E roda."</p>
+    </section>
+
+    <!-- 22 -->
+    <section class="slide">
+      <p class="big" style="text-align: center;">Café com leite.</p>
+      <p style="margin-top: 18px;">E o resto do Brasil?</p>
+      <p style="margin-top: 8px;">Engolia. Os pequenos faziam o que os grandes mandavam.</p>
+    </section>
+
+    <!-- 23 -->
+    <section class="slide">
+      <div class="eyebrow">Atenção aqui</div>
+      <p>Esse acordo <strong>não tava escrito em lugar nenhum</strong>.</p>
+      <p style="margin-top: 14px;">Era combinado de boca.</p>
+      <p class="big" style="margin-top: 14px;">E durou mais de 30 anos.</p>
+    </section>
+
+    <!-- 24 lição -->
+    <section class="slide">
+      <p class="quote">Acordo informal entre poderosos é mais forte que lei escrita.</p>
+      <p style="margin-top: 16px;">Quando você for entender qualquer estrutura — empresa, partido, país…</p>
+      <p style="margin-top: 8px; font-family: var(--serif); font-style: italic; color: var(--accent);">Pergunta: <em>qual é o combinado não escrito?</em></p>
+    </section>
+
+    <!-- 25 ENGRENAGEM 2 -->
+    <section class="slide">
+      <span class="stamp">Engrenagem 2</span>
+      <h2 style="margin-top: 14px;">Política dos <em>governadores</em>.</h2>
+      <p style="margin-top: 14px;">Inventada por <strong>Campos Sales</strong>.</p>
+      <p style="margin-top: 6px; font-size: 14px; color: var(--ink-soft); font-style: italic;">Presidente. Paulista. Cafeicultor. Já era de esperar.</p>
+    </section>
+
+    <!-- 26 -->
+    <section class="slide">
+      <p>A jogada era simples.</p>
+      <p style="margin-top: 14px;">Presidente apoia o governador que cada estado indicar.</p>
+      <p style="margin-top: 14px;">Em troca?</p>
+      <p class="big" style="margin-top: 8px;">Os deputados <em>obedecem</em> o presidente.</p>
+    </section>
+
+    <!-- 27 -->
+    <section class="slide">
+      <p>"E se algum deputado de oposição for eleito?"</p>
+      <p class="big" style="margin-top: 14px; color: var(--wrong);">Degola.</p>
+      <p style="margin-top: 14px;">O Congresso simplesmente <strong>não reconhecia o mandato</strong>.</p>
+      <div class="illu sm" style="margin: 18px auto;">
+        <svg viewBox="0 0 120 80" class="draw" fill="none" stroke="#B5342B" stroke-width="1.5">
+          <rect x="20" y="20" width="80" height="50" rx="3"/>
+          <path d="M30 32 L90 32 M30 42 L90 42 M30 52 L60 52"/>
+          <path d="M25 15 L95 65" stroke="#B5342B" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <p style="font-size: 14px; color: var(--ink-soft); font-style: italic;">Quem incomodava, era cortado.</p>
+    </section>
+
+    <!-- 28 -->
+    <section class="slide">
+      <p>Resultado:</p>
+      <p class="big" style="margin-top: 14px;">Oposição praticamente <em>impossível</em>.</p>
+      <p style="margin-top: 14px;">Congresso virou carimbo do presidente.</p>
+      <p>Presidente virou marionete das oligarquias.</p>
+      <p style="margin-top: 12px; font-family: var(--serif); font-style: italic; color: var(--accent);">Todo mundo se protegia.</p>
+    </section>
+
+    <!-- 29 ENGRENAGEM 3 -->
+    <section class="slide">
+      <span class="stamp">Engrenagem 3</span>
+      <h2 style="margin-top: 14px;">O <em>coronelismo</em>.</h2>
+      <p style="margin-top: 14px;">Agora desce do federal pro local.</p>
+      <p style="margin-top: 8px; font-family: var(--serif); font-style: italic; color: var(--accent);">É aqui que fica nojento.</p>
+    </section>
+
+    <!-- 30 -->
+    <section class="slide">
+      <p>No interior do Brasil, em cada cidadezinha, mandava um…</p>
+      <p class="big" style="margin-top: 14px; color: var(--accent);"><em>Coronel</em>.</p>
+      <p style="margin-top: 14px;">Mas calma. "Coronel" aqui <strong>não é militar</strong>.</p>
+    </section>
+
+    <!-- 31 -->
+    <section class="slide">
+      <p>Era apelido pra <strong>grande dono de terra</strong>.</p>
+      <p style="margin-top: 14px;">E esse cara mandava em <em>tudo</em>:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Tinha jagunço armado.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Controlava o juiz.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Controlava o delegado.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Controlava o padre.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px; border-left: 3px solid var(--accent);">Controlava <strong>o voto</strong>.</div>
+      </div>
+    </section>
+
+    <!-- 32 voto aberto -->
+    <section class="slide">
+      <div class="eyebrow">Liga isso</div>
+      <p>Naquele tempo o voto <strong>não era secreto</strong>.</p>
+      <p class="big" style="margin-top: 14px;">Era aberto.</p>
+      <p style="margin-top: 14px;">Você declarava em quem tava votando.</p>
+      <p style="margin-top: 10px;">E o coronel… <em>sabia</em>.</p>
+    </section>
+
+    <!-- 33 -->
+    <section class="slide">
+      <p>E o coronel mandava em:</p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Seu emprego.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Sua terra.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Seu crédito.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">A saúde da sua família.</div>
+      </div>
+      <p style="margin-top: 14px;">Votou errado? <strong>Já era.</strong></p>
+    </section>
+
+    <!-- 34 cabresto -->
+    <section class="slide">
+      <p class="big">Isso tinha nome.</p>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--accent);">Voto de cabresto.</p>
+      <div class="illu sm" style="margin: 18px auto;">
+        <svg viewBox="0 0 140 90" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <!-- cabeça de cavalo simplificada -->
+          <path d="M30 70 Q30 30 60 30 Q85 30 90 50 L100 55 Q105 60 100 70 L60 75 Z"/>
+          <circle cx="50" cy="50" r="2" fill="#B8862F"/>
+          <!-- cabresto -->
+          <path d="M75 55 L110 50 M75 65 L110 70"/>
+          <path d="M110 45 L125 45 L125 75 L110 75 Z"/>
+        </svg>
+      </div>
+      <p style="font-size: 14px; color: var(--ink-soft); font-style: italic;">Cabresto é a corda que se põe no focinho do cavalo pra guiar.</p>
+    </section>
+
+    <!-- 35 -->
+    <section class="slide">
+      <p>E quando o cabresto falhava?</p>
+      <p class="big" style="margin-top: 14px;">Fraude descarada.</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Urnas trocadas.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Morto votando.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Atas falsificadas.</div>
+      </div>
+      <p style="margin-top: 14px; font-size: 14px; font-style: italic; color: var(--ink-soft);">Era tão comum que tinha apelido: "<strong>eleição a bico de pena</strong>". O fiscal escrevia o resultado que queria.</p>
+    </section>
+
+    <!-- 36 quem votava -->
+    <section class="slide">
+      <div class="eyebrow">E quem podia votar?</div>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Só homem.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Só alfabetizado.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Só maior de 21.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Soldado raso? Não vota.</div>
+      </div>
+    </section>
+
+    <!-- 37 -->
+    <section class="slide">
+      <p>Resultado: quanta gente votava no total?</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <div class="number" style="font-size: 72px;">2 a 5%</div>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">da população.</p>
+      </div>
+      <p class="big">Cinco por cento.</p>
+      <p style="margin-top: 10px; font-family: var(--serif); font-style: italic; color: var(--accent);">Democracia entre aspas bem grossas.</p>
+    </section>
+
+    <!-- 38 ECONOMIA -->
+    <section class="slide">
+      <div class="eyebrow">Agora junta tudo</div>
+      <p>Pra que servem essas três engrenagens?</p>
+      <p class="big" style="margin-top: 14px;">Pra proteger <em>uma coisa só</em>.</p>
+      <div class="illu sm" style="margin: 20px auto;">
+        <svg viewBox="0 0 100 100" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M30 50 L30 80 Q30 88 38 88 L62 88 Q70 88 70 80 L70 50 Z"/>
+          <path d="M70 60 Q82 60 82 70 Q82 80 70 80"/>
+          <path d="M40 42 Q40 36 46 36 M50 42 Q50 36 56 36 M60 42 Q60 36 66 36"/>
+        </svg>
+      </div>
+      <p class="big" style="text-align: center; color: var(--accent);">O café.</p>
+    </section>
+
+    <!-- 39 Taubaté -->
+    <section class="slide">
+      <div class="eyebrow">1906 · Convênio de Taubaté</div>
+      <p>O preço do café tava caindo no mundo.</p>
+      <p style="margin-top: 14px;">Aí SP, MG e RJ se reuniram em Taubaté.</p>
+      <p class="big" style="margin-top: 14px;">E fizeram uma jogada genial.</p>
+    </section>
+
+    <!-- 40 -->
+    <section class="slide">
+      <p>A jogada:</p>
+      <div style="margin-top: 14px; padding: 16px; background: var(--paper); border-radius: 12px; border-left: 3px solid var(--accent);">
+        <p style="font-size: 15px;">"O <strong>governo federal</strong> compra o café que sobrar dos produtores."</p>
+        <p style="font-size: 15px; margin-top: 8px;">"Com dinheiro emprestado <strong>de banco estrangeiro</strong>."</p>
+        <p style="font-size: 15px; margin-top: 8px;">"E quem paga o empréstimo depois?"</p>
+        <p style="font-size: 15px; margin-top: 8px; font-family: var(--serif); font-style: italic; color: var(--accent);">"O Brasil inteiro."</p>
+      </div>
+    </section>
+
+    <!-- 41 -->
+    <section class="slide">
+      <p class="quote">Lucro privado. Prejuízo socializado.</p>
+      <p style="margin-top: 16px;">Café subiu? Fazendeiro ganha.</p>
+      <p>Café caiu? Governo cobre.</p>
+      <p class="big" style="margin-top: 14px;">Quem paga a conta?</p>
+      <p style="margin-top: 10px;">O trabalhador da cidade, no imposto e na moeda desvalorizada.</p>
+    </section>
+
+    <!-- 42 lição -->
+    <section class="slide">
+      <div class="eyebrow">Pra vida</div>
+      <p class="quote">Quando um governo "salva" um setor, pergunta: <em>quem se beneficia direto e quem paga indireto?</em></p>
+      <p style="margin-top: 16px;">Quase nunca são as mesmas pessoas.</p>
+      <p style="margin-top: 12px; font-family: var(--serif); font-style: italic; color: var(--accent);">Esse modelo não morreu em 1930. Tá vivo até hoje.</p>
+    </section>
+
+    <!-- 43 POVO -->
+    <section class="slide">
+      <p class="big">E o povo, nesse tempo todo?</p>
+      <p style="margin-top: 18px; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--accent);">Apanhava.</p>
+      <p style="margin-top: 8px;">Literalmente.</p>
+    </section>
+
+    <!-- 44 4 revoltas -->
+    <section class="slide">
+      <p>A República Velha foi um dos períodos <strong>mais violentos</strong> contra o pobre no Brasil.</p>
+      <p style="margin-top: 14px;">Quatro revoltas grandes. Cada uma diz algo sobre o regime.</p>
+    </section>
+
+    <!-- 45 CANUDOS -->
+    <section class="slide">
+      <span class="stamp red">Revolta 1</span>
+      <h2 style="margin-top: 14px;">Canudos.</h2>
+      <p style="margin-top: 8px; font-size: 14px; color: var(--ink-soft);">Bahia · 1896–1897</p>
+    </section>
+
+    <!-- 46 -->
+    <section class="slide">
+      <p>No sertão da Bahia, um beato chamado <strong>Antônio Conselheiro</strong>…</p>
+      <div class="illu sm" style="margin: 18px auto;">
+        <svg viewBox="0 0 120 100" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <!-- figura com manto -->
+          <circle cx="60" cy="25" r="10"/>
+          <path d="M50 35 L40 90 L80 90 L70 35"/>
+          <path d="M55 50 L65 50"/>
+          <path d="M60 12 L60 5 M58 8 L62 8"/>
+        </svg>
+      </div>
+      <p>…fundou uma cidade religiosa no meio do nada. Chamada <strong>Belo Monte</strong>.</p>
+    </section>
+
+    <!-- 47 -->
+    <section class="slide">
+      <p>Era tipo uma comunidade igualitária.</p>
+      <p style="margin-top: 12px;">Sertanejo miserável encontrava ali:</p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Comida.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Abrigo.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Fé.</div>
+      </div>
+      <p style="margin-top: 14px;">Chegou a <strong>25 mil habitantes</strong>. Uma das maiores cidades do norte na época.</p>
+    </section>
+
+    <!-- 48 -->
+    <section class="slide">
+      <p>Pra República, aquilo era <strong>inaceitável</strong>.</p>
+      <p style="margin-top: 14px;">Por quê?</p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Conselheiro era monarquista.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Pregava contra imposto.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px; border-left: 3px solid var(--accent);">E o pior: <strong>tirava mão de obra dos coronéis</strong>.</div>
+      </div>
+    </section>
+
+    <!-- 49 -->
+    <section class="slide">
+      <p>O governo mandou <strong>quatro expedições militares</strong>.</p>
+      <p style="margin-top: 14px;">As três primeiras?</p>
+      <p class="big" style="margin-top: 8px;">Derrotadas.</p>
+      <p style="margin-top: 14px;">Por sertanejos pobres, mal armados, mas que <em>conheciam o terreno</em>.</p>
+    </section>
+
+    <!-- 50 -->
+    <section class="slide">
+      <p>A quarta veio com canhões.</p>
+      <p class="big" style="margin-top: 14px; color: var(--wrong);">Dizimou tudo.</p>
+      <div style="text-align: center; margin: 18px 0;">
+        <div class="number" style="font-size: 60px; color: var(--wrong);">~25 mil</div>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">mortos.</p>
+      </div>
+      <p>Mulheres, crianças, velhos. Degolados.</p>
+    </section>
+
+    <!-- 51 -->
+    <section class="slide">
+      <p class="quote">"Canudos não se rendeu."</p>
+      <p style="margin-top: 12px; font-size: 14px; color: var(--ink-soft);">— Euclides da Cunha, que cobriu a guerra.</p>
+      <p style="margin-top: 16px;">É verdade.</p>
+      <p class="big" style="margin-top: 8px;">Foi <em>exterminada</em>.</p>
+    </section>
+
+    <!-- 52 VACINA -->
+    <section class="slide">
+      <span class="stamp red">Revolta 2</span>
+      <h2 style="margin-top: 14px;">Revolta da <em>Vacina</em>.</h2>
+      <p style="margin-top: 8px; font-size: 14px; color: var(--ink-soft);">Rio de Janeiro · 1904</p>
+    </section>
+
+    <!-- 53 -->
+    <section class="slide">
+      <p>O presidente Rodrigues Alves (sim, outro paulista cafeicultor) quis modernizar o Rio.</p>
+      <p style="margin-top: 14px;">A cidade tava cheia de doença:</p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Febre amarela.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Varíola.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Peste bubônica.</div>
+      </div>
+    </section>
+
+    <!-- 54 bota-abaixo -->
+    <section class="slide">
+      <p>O prefeito Pereira Passos fez o famoso "<strong>bota-abaixo</strong>".</p>
+      <div class="illu sm" style="margin: 16px auto;">
+        <svg viewBox="0 0 140 80" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <rect x="20" y="40" width="20" height="30"/>
+          <rect x="45" y="35" width="20" height="35"/>
+          <path d="M75 50 L95 50 L95 70 L75 70" stroke-dasharray="3 3"/>
+          <path d="M100 30 L130 30 L130 70 L100 70"/>
+          <path d="M110 30 L110 70 M120 30 L120 70"/>
+        </svg>
+      </div>
+      <p>Derrubavam <strong>cortiços inteiros</strong> pra abrir avenidas no estilo Paris.</p>
+    </section>
+
+    <!-- 55 -->
+    <section class="slide">
+      <p>Quem morava ali?</p>
+      <p class="big" style="margin-top: 14px;">Expulso.</p>
+      <p style="margin-top: 12px;">Sem indenização. Sem aviso.</p>
+      <p style="margin-top: 14px;">Onde foram parar?</p>
+      <p style="margin-top: 8px; font-family: var(--serif); font-style: italic; font-size: 20px; color: var(--accent);">Nos morros.</p>
+      <p style="margin-top: 8px;">É a origem das <strong>favelas cariocas</strong>.</p>
+    </section>
+
+    <!-- 56 vacina obrigatória -->
+    <section class="slide">
+      <p>Ao mesmo tempo, o sanitarista <strong>Oswaldo Cruz</strong> tornou a vacina contra varíola <em>obrigatória</em>.</p>
+      <p style="margin-top: 14px;">Brigadas entravam nas casas com <strong>polícia armada</strong>.</p>
+      <p style="margin-top: 12px;">Vacinavam à força. Inclusive mulheres tendo que mostrar partes do corpo pra desconhecidos.</p>
+    </section>
+
+    <!-- 57 -->
+    <section class="slide">
+      <p>Sem campanha. Sem explicação. Sem diálogo.</p>
+      <p class="big" style="margin-top: 14px;">Resultado?</p>
+      <p style="margin-top: 12px;">Novembro de 1904. <strong>Revolta</strong>.</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Barricadas na rua.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Bondes virados.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Tiroteio.</div>
+      </div>
+    </section>
+
+    <!-- 58 -->
+    <section class="slide">
+      <p>Governo respondeu na bala.</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">~30 mortos.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">+100 feridos.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Centenas de presos.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Gente deportada pro Acre.</div>
+      </div>
+    </section>
+
+    <!-- 59 lição -->
+    <section class="slide">
+      <div class="eyebrow">Atenção</div>
+      <p>A vacina era boa. O método foi brutal.</p>
+      <p class="quote" style="margin-top: 14px;">Uma política pode ter objetivo legítimo <em>e ainda assim</em> ser autoritária na execução.</p>
+      <p style="margin-top: 14px;">Não confunde os dois.</p>
+    </section>
+
+    <!-- 60 CHIBATA -->
+    <section class="slide">
+      <span class="stamp red">Revolta 3</span>
+      <h2 style="margin-top: 14px;">Revolta da <em>Chibata</em>.</h2>
+      <p style="margin-top: 8px; font-size: 14px; color: var(--ink-soft);">Rio de Janeiro · 1910</p>
+    </section>
+
+    <!-- 61 -->
+    <section class="slide">
+      <p>Na Marinha, ainda se usava <strong>chibata</strong> como castigo.</p>
+      <div class="illu sm" style="margin: 16px auto;">
+        <svg viewBox="0 0 140 80" class="draw" fill="none" stroke="#B5342B" stroke-width="1.5">
+          <path d="M30 60 L60 30"/>
+          <path d="M60 30 Q70 25 80 35 Q90 45 95 35 Q100 25 110 35"/>
+          <rect x="22" y="55" width="14" height="10" rx="2"/>
+        </svg>
+      </div>
+      <p style="font-size: 14px; color: var(--ink-soft); font-style: italic;">Chibata = chicote de couro trançado.</p>
+    </section>
+
+    <!-- 62 -->
+    <section class="slide">
+      <p>E a maioria dos marinheiros era <strong>negra</strong>.</p>
+      <p style="margin-top: 14px;">Filhos e netos de escravizados.</p>
+      <p style="margin-top: 12px; font-family: var(--serif); font-style: italic; color: var(--accent);">A escravidão tinha acabado havia só 22 anos.</p>
+    </section>
+
+    <!-- 63 -->
+    <section class="slide">
+      <p>Aí veio um cara chamado <strong>João Cândido</strong>.</p>
+      <p style="margin-top: 8px; font-size: 14px; color: var(--ink-soft); font-style: italic;">Apelido: "Almirante Negro".</p>
+      <p style="margin-top: 14px;">Ele liderou os marujos. <strong>Tomaram os couraçados</strong> (navios de guerra blindados).</p>
+      <p style="margin-top: 14px;">E apontaram os canhões…</p>
+      <p class="big" style="margin-top: 8px; color: var(--accent);">…pra cidade.</p>
+    </section>
+
+    <!-- 64 -->
+    <section class="slide">
+      <p>Exigiram três coisas:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Fim do castigo físico.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Comida melhor.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Aumento de salário.</div>
+      </div>
+      <p style="margin-top: 14px;">O governo cedeu.</p>
+      <p class="big" style="margin-top: 6px;">Por escrito.</p>
+    </section>
+
+    <!-- 65 -->
+    <section class="slide">
+      <p>E depois?</p>
+      <p class="big" style="margin-top: 14px; color: var(--wrong);">Traiu.</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Prendeu os líderes.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Expulsou centenas.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Jogou muitos numa prisão na Ilha das Cobras. Morreram lá.</div>
+      </div>
+    </section>
+
+    <!-- 66 -->
+    <section class="slide">
+      <p>E João Cândido?</p>
+      <p style="margin-top: 14px;">Sobreviveu.</p>
+      <p style="margin-top: 12px;">Mas foi pro hospício.</p>
+      <p style="margin-top: 12px;">Depois virou estivador miserável até morrer em 1969.</p>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; color: var(--accent);">O "Almirante Negro" acabou esquecido.</p>
+    </section>
+
+    <!-- 67 lição -->
+    <section class="slide">
+      <div class="eyebrow">Pra vida</div>
+      <p class="quote">Acordo só vale quando você tem como cobrar.</p>
+      <p style="margin-top: 16px;">Marinheiro desarmado depois de devolver os navios não tinha nada.</p>
+      <p style="margin-top: 14px;">Em qualquer negociação, pergunta:</p>
+      <p style="margin-top: 8px; font-family: var(--serif); font-style: italic; color: var(--accent);">"Depois que eu cumprir minha parte, o que me garante que o outro lado cumpre a dele?"</p>
+    </section>
+
+    <!-- 68 CONTESTADO -->
+    <section class="slide">
+      <span class="stamp red">Revolta 4</span>
+      <h2 style="margin-top: 14px;">Contestado.</h2>
+      <p style="margin-top: 8px; font-size: 14px; color: var(--ink-soft);">Paraná e Santa Catarina · 1912–1916</p>
+    </section>
+
+    <!-- 69 -->
+    <section class="slide">
+      <p>Outro caso parecido com Canudos.</p>
+      <p style="margin-top: 14px;">Sertanejo pobre seguindo um monge messiânico chamado <strong>José Maria</strong>.</p>
+      <p style="margin-top: 14px;">Comunidade religiosa. Igualitária. Largada pelo Estado.</p>
+    </section>
+
+    <!-- 70 -->
+    <section class="slide">
+      <p>Mas aqui tinha um <em>detalhe</em>.</p>
+      <p style="margin-top: 14px;">A região estava sendo loteada pra…</p>
+      <p class="big" style="margin-top: 10px; color: var(--accent);">Uma empresa americana.</p>
+      <p style="margin-top: 12px; font-size: 15px;">A <strong>Brazil Railway Company</strong> construía uma ferrovia.</p>
+    </section>
+
+    <!-- 71 -->
+    <section class="slide">
+      <p>E ganhava do governo <strong>enormes faixas de terra</strong> dos dois lados dos trilhos.</p>
+      <div class="illu" style="margin: 18px auto; max-width: 240px;">
+        <svg viewBox="0 0 240 80" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M10 40 L230 40"/>
+          <path d="M10 44 L230 44"/>
+          <path d="M20 42 L20 48 M40 42 L40 48 M60 42 L60 48 M80 42 L80 48 M100 42 L100 48 M120 42 L120 48 M140 42 L140 48 M160 42 L160 48 M180 42 L180 48 M200 42 L200 48 M220 42 L220 48"/>
+          <path d="M10 20 L230 20" stroke-dasharray="3 3"/>
+          <path d="M10 65 L230 65" stroke-dasharray="3 3"/>
+        </svg>
+      </div>
+      <p>Quem vivia ali há gerações? <strong>Expulso</strong>. Pra dar lugar pro capital estrangeiro.</p>
+    </section>
+
+    <!-- 72 -->
+    <section class="slide">
+      <p>Resultado: <strong>guerra</strong>.</p>
+      <p style="margin-top: 14px;">O governo mandou tropas.</p>
+      <p style="margin-top: 14px;">E pela primeira vez no Brasil, usou…</p>
+      <p class="big" style="margin-top: 10px; color: var(--accent);">Aviões de guerra.</p>
+      <p style="margin-top: 12px;">Tecnologia de ponta da época. Contra sertanejo com <strong>facão</strong>.</p>
+    </section>
+
+    <!-- 73 -->
+    <section class="slide">
+      <div style="text-align: center; margin: 12px 0;">
+        <div class="number" style="font-size: 60px; color: var(--wrong);">5 a 8 mil</div>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">mortos.</p>
+      </div>
+      <p class="big" style="margin-top: 14px;">A escola quase nunca conta.</p>
+      <p style="margin-top: 10px;">Mas você precisava saber.</p>
+    </section>
+
+    <!-- 74 TENENTISMO -->
+    <section class="slide">
+      <div class="eyebrow">Anos 1920</div>
+      <h2>O <em>tenentismo</em>.</h2>
+      <p style="margin-top: 14px;">A primeira rachadura no esquema.</p>
+    </section>
+
+    <!-- 75 -->
+    <section class="slide">
+      <p>Oficiais jovens do Exército. Patente de <strong>tenente</strong>.</p>
+      <div class="illu sm" style="margin: 16px auto;">
+        <svg viewBox="0 0 100 100" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <circle cx="50" cy="30" r="10"/>
+          <path d="M40 25 L60 25 L60 30 L40 30 Z"/>
+          <path d="M50 40 L50 75 M35 50 L65 50 M40 75 L50 90 M60 75 L50 90"/>
+        </svg>
+      </div>
+      <p>Começaram a se revoltar contra o esquema oligárquico.</p>
+    </section>
+
+    <!-- 76 -->
+    <section class="slide">
+      <p>Por quê?</p>
+      <p style="margin-top: 12px;">Eram classe média militar, cansada de ver o país ser governado <strong>só pros fazendeiros</strong>.</p>
+      <p style="margin-top: 14px;">Queriam:</p>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Voto secreto.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Educação pública.</div>
+        <div style="padding: 10px 14px; background: var(--paper); border-radius: 8px; font-size: 15px;">Fim do domínio das oligarquias.</div>
+      </div>
+    </section>
+
+    <!-- 77 18 do Forte -->
+    <section class="slide">
+      <div class="eyebrow">1922</div>
+      <p class="big">Os 18 do Forte de Copacabana.</p>
+      <p style="margin-top: 14px;">Um grupo de oficiais saiu marchando do forte pra enfrentar o governo.</p>
+      <p style="margin-top: 14px;">Foram <strong>massacrados na praia</strong>.</p>
+      <p style="margin-top: 10px; font-family: var(--serif); font-style: italic; color: var(--accent);">Virou símbolo.</p>
+    </section>
+
+    <!-- 78 Paulista 24 -->
+    <section class="slide">
+      <div class="eyebrow">1924</div>
+      <p class="big">Revolta Paulista.</p>
+      <p style="margin-top: 14px;">Tenentes <strong>tomaram São Paulo</strong> por três semanas.</p>
+      <p style="margin-top: 14px;">E o governo?</p>
+      <p class="big" style="margin-top: 8px; color: var(--wrong);">Bombardeou a própria cidade.</p>
+      <p style="margin-top: 10px;">Pra retomar.</p>
+    </section>
+
+    <!-- 79 Prestes -->
+    <section class="slide">
+      <div class="eyebrow">1925–1927</div>
+      <h2>A <em>Coluna Prestes</em>.</h2>
+      <p style="margin-top: 14px;">Liderada por <strong>Luís Carlos Prestes</strong>.</p>
+      <p style="margin-top: 6px; font-size: 14px; color: var(--ink-soft); font-style: italic;">Apelido: "Cavaleiro da Esperança".</p>
+    </section>
+
+    <!-- 80 -->
+    <section class="slide">
+      <p>Depois da derrota em SP, o grupo dele percorreu…</p>
+      <div style="text-align: center; margin: 18px 0;">
+        <div class="number">25 mil</div>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">km pelo interior do Brasil.</p>
+      </div>
+      <div class="illu sm" style="margin: 0 auto 14px;">
+        <svg viewBox="0 0 140 80" class="draw" fill="none" stroke="#B8862F" stroke-width="1.5">
+          <path d="M20 60 Q30 30 50 40 Q70 50 80 25 Q95 45 120 30" stroke-dasharray="4 3"/>
+          <circle cx="20" cy="60" r="3" fill="#B8862F"/>
+          <circle cx="120" cy="30" r="3" fill="#B8862F"/>
+        </svg>
+      </div>
+      <p><strong>13 estados</strong>. Sem ser pego.</p>
+    </section>
+
+    <!-- 81 -->
+    <section class="slide">
+      <p>Não derrubou o governo.</p>
+      <p style="margin-top: 14px;">Mas mostrou uma coisa <strong>séria</strong>:</p>
+      <p class="quote" style="margin-top: 12px;">O Estado <em>não controlava o próprio território</em>.</p>
+      <p style="margin-top: 14px;">E Prestes virou mito. Depois, ícone do comunismo brasileiro por décadas.</p>
+    </section>
+
+    <!-- 82 1930 -->
+    <section class="slide">
+      <p>O tenentismo não derrubou a República Velha sozinho.</p>
+      <p style="margin-top: 14px;">Mas plantou a ideia: <strong>o sistema tinha que cair</strong>.</p>
+      <p style="margin-top: 14px;">Em 1929, o café desabou na crise mundial.</p>
+      <p class="big" style="margin-top: 12px; color: var(--accent);">O chão sumiu.</p>
+    </section>
+
+    <!-- 83 -->
+    <section class="slide">
+      <p>Em 1930, um cara dá o golpe que encerra tudo.</p>
+      <p class="big" style="margin-top: 14px;">Getúlio Vargas.</p>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; color: var(--accent);">Com apoio dos tenentes.</p>
+      <p style="margin-top: 10px;">Mas isso é a próxima aula.</p>
+    </section>
+
+    <!-- 84 RESUMÃO -->
+    <section class="slide">
+      <div class="eyebrow">Resumindo</div>
+      <p>A República Velha (1889–1930) tinha cara de democracia.</p>
+      <p style="margin-top: 12px;">Mas era controlada por <strong>três engrenagens</strong>:</p>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 22px;">01</span>
+          <span style="font-family: var(--serif); font-size: 15px;">Café com leite (SP + MG)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 22px;">02</span>
+          <span style="font-family: var(--serif); font-size: 15px;">Política dos governadores</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--paper); border-radius: 10px;">
+          <span style="font-family: var(--serif); font-weight: 800; color: var(--accent); font-size: 22px;">03</span>
+          <span style="font-family: var(--serif); font-size: 15px;">Coronelismo + voto de cabresto</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 85 -->
+    <section class="slide">
+      <p>Só <strong>2 a 5%</strong> da população votava.</p>
+      <p style="margin-top: 14px;">O Convênio de Taubaté (1906) inventou o modelo brasileiro de socializar prejuízo.</p>
+      <p style="margin-top: 14px;">Quatro grandes revoltas: Canudos, Vacina, Chibata, Contestado.</p>
+      <p style="margin-top: 14px;">Tudo reprimido com violência extrema.</p>
+    </section>
+
+    <!-- 86 gancho -->
+    <section class="slide">
+      <div class="eyebrow">Próxima aula</div>
+      <p>Outubro de 1930.</p>
+      <p style="margin-top: 14px;">Tropas gaúchas amarrando seus cavalos no obelisco da Avenida Rio Branco.</p>
+      <p style="margin-top: 14px;">À frente delas: um advogado baixinho, charuto na boca.</p>
+      <p class="big" style="margin-top: 12px; color: var(--accent);">Getúlio Vargas.</p>
+    </section>
+
+    <!-- 87 -->
+    <section class="slide">
+      <p>Ele ia governar o Brasil por <strong>15 anos seguidos</strong>.</p>
+      <p style="margin-top: 14px;">Sair com um golpe em 45.</p>
+      <p>Voltar pela urna em 50.</p>
+      <p>Sair em 54 com um tiro no peito.</p>
+      <p style="margin-top: 14px; font-family: var(--serif); font-style: italic; color: var(--accent);">No meio, ele inventou o Brasil moderno.</p>
+      <p style="margin-top: 10px;">Pro bem e pro mal.</p>
+    </section>
+
+    <!-- 88 INTRO QUIZ -->
+    <section class="slide quiz-intro">
+      <div class="quiz-icon">?</div>
+      <div class="eyebrow" style="text-align: center;">Hora do quiz</div>
+      <h2>Bora ver o que ficou.</h2>
+      <p style="margin-top: 14px;">Seis perguntas rápidas.<br>Se errar, eu te explico na hora.</p>
+    </section>
+
+    <!-- 89 QUIZ 1 -->
+    <section class="slide" data-quiz="1">
+      <div class="question-num">Pergunta 1 de 6</div>
+      <div class="question">O que era a "política do café com leite"?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Não tinha nada a ver com agricultura misturada. Era acordo POLÍTICO entre dois estados.">
+          <span class="letter">A</span><span>Um plano agrícola pra misturar café e leite na economia.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">B</span><span>Um acordo informal entre SP e MG pra revezar a presidência.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Era acordo informal entre dois estados (SP e MG), não lei nacional.">
+          <span class="letter">C</span><span>Uma lei federal que dava o poder pra São Paulo.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Mandou bem.</span>Isso. <strong>São Paulo</strong> (café) e <strong>Minas Gerais</strong> (leite) se revezavam na presidência. Não tava escrito em lugar nenhum. Era combinado de boca — e durou mais de 30 anos.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a B.</strong> Café com leite era acordo informal: SP indica um presidente, MG indica o próximo, e roda. Nunca foi lei.</div>
+    </section>
+
+    <!-- 90 QUIZ 2 -->
+    <section class="slide" data-quiz="2">
+      <div class="question-num">Pergunta 2 de 6</div>
+      <div class="question">Quem era o "coronel" da República Velha?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Coronel aqui não era militar de verdade. Era apelido pra outra coisa.">
+          <span class="letter">A</span><span>Um militar do Exército no comando da região.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Coronel era homem, geralmente velho — e mandava muito além da fazenda.">
+          <span class="letter">B</span><span>Uma jovem fazendeira do interior.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">C</span><span>Um grande dono de terra que mandava em tudo na região.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Tá ligado.</span>Exato. "Coronel" era apelido pra <strong>grande proprietário de terra</strong>. Controlava juiz, delegado, padre, jagunço — e principalmente o <em>voto</em> da população.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a C.</strong> Coronel não era militar. Era grande dono de terra que mandava no interior.</div>
+    </section>
+
+    <!-- 91 QUIZ 3 -->
+    <section class="slide" data-quiz="3">
+      <div class="question-num">Pergunta 3 de 6</div>
+      <div class="question">O que era "voto de cabresto"?</div>
+      <div class="options">
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">A</span><span>O coronel obrigava o eleitor a votar nele — o voto era aberto.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Pelo contrário. O voto era ABERTO e por isso o coronel sabia em quem você votou e te punia.">
+          <span class="letter">B</span><span>O voto era secreto, mas o eleitor era pago em dinheiro.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Não tinha nada a ver com cavalo. 'Cabresto' aqui era metáfora: o eleitor era guiado igual cavalo.">
+          <span class="letter">C</span><span>Um voto especial dado por quem tinha cavalo.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Boa.</span>Isso. O voto era <strong>aberto</strong>. O coronel sabia em quem você votou. E controlava seu emprego, sua terra, seu crédito. "Votou errado? Já era."</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a A.</strong> Cabresto vem da corda que se põe no cavalo pra guiar. O eleitor era guiado igual cavalo: votava no que o coronel mandava ou se ferrava.</div>
+    </section>
+
+    <!-- 92 QUIZ 4 -->
+    <section class="slide" data-quiz="4">
+      <div class="question-num">Pergunta 4 de 6</div>
+      <div class="question">O que foi o Convênio de Taubaté, em 1906?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Não tinha nada a ver com vacina. Era acordo ECONÔMICO sobre o café.">
+          <span class="letter">A</span><span>Um acordo de saúde pra combater epidemias.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">B</span><span>Governo passou a comprar café que sobrava, com dinheiro emprestado.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Foi o contrário. O governo passou a SUSTENTAR o preço comprando o excedente.">
+          <span class="letter">C</span><span>Uma lei que proibiu o Brasil de produzir café.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Acertou.</span>Exato. Quando o café caía no mercado, o <strong>governo comprava o excedente</strong> com empréstimo estrangeiro. Fazendeiro ganhava se subia, não perdia se caía. Quem pagava a conta era o Brasil inteiro.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a B.</strong> Taubaté foi o primeiro grande exemplo de "lucro privado, prejuízo socializado" no Brasil.</div>
+    </section>
+
+    <!-- 93 QUIZ 5 -->
+    <section class="slide" data-quiz="5">
+      <div class="question-num">Pergunta 5 de 6</div>
+      <div class="question">Por que a Revolta da Chibata (1910) é tão lembrada?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Os marinheiros tomaram os navios, mas o assunto principal era OUTRO.">
+          <span class="letter">A</span><span>Porque marinheiros tomaram navios pra fugir do Brasil.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">B</span><span>Marinheiros negros se revoltaram contra castigo físico — e foram traídos depois.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. A revolta foi DENTRO da Marinha, contra a própria Marinha. Não foi contra país estrangeiro.">
+          <span class="letter">C</span><span>Foi uma guerra naval contra a Inglaterra.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Mandou bem.</span>Isso. Liderados por <strong>João Cândido</strong>, marinheiros (a maioria negra) tomaram os couraçados, exigiram fim da chibata. O governo cedeu por escrito. <em>Depois traiu o acordo.</em></div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a B.</strong> Foi revolta contra castigo físico na Marinha. Lição: acordo só vale quando você tem como cobrar depois.</div>
+    </section>
+
+    <!-- 94 QUIZ 6 -->
+    <section class="slide" data-quiz="6">
+      <div class="question-num">Pergunta 6 de 6</div>
+      <div class="question">O que foi o tenentismo?</div>
+      <div class="options">
+        <button class="option" data-correct="false" data-explain="Não. Não foi movimento de fazendeiros. Foi de MILITARES — e contra o esquema, não a favor.">
+          <span class="letter">A</span><span>Um movimento de fazendeiros que defendiam o café com leite.</span>
+        </button>
+        <button class="option" data-correct="false" data-explain="Não. Os tenentes não tomaram o poder em 22. Foram massacrados várias vezes. Mas plantaram a ideia.">
+          <span class="letter">B</span><span>Um partido político que ganhou eleição em 1922.</span>
+        </button>
+        <button class="option" data-correct="true" data-explain="">
+          <span class="letter">C</span><span>Revoltas de oficiais jovens contra o esquema oligárquico.</span>
+        </button>
+      </div>
+      <div class="feedback right" data-fb="right"><span class="head">Top.</span>Isso. Tenentes (oficiais jovens) começaram a se revoltar nos anos 20. <strong>18 do Forte</strong>, <strong>Revolta Paulista de 24</strong>, <strong>Coluna Prestes</strong>. Não derrubaram o sistema sozinhos — mas prepararam 1930.</div>
+      <div class="feedback miss" data-fb="miss"><span class="head">Quase.</span><span data-explain-text></span><br><br><strong>A certa é a C.</strong> Tenentismo foi a primeira rachadura interna da República Velha — feita pelos próprios militares jovens.</div>
+    </section>
+
+    <!-- 95 END -->
+    <section class="slide end">
+      <div class="eyebrow" style="color: var(--accent-soft);">Fim da aula</div>
+      <h2>Você foi.</h2>
+      <div class="score" id="score">0/6</div>
+      <p id="end-msg">Agora você enxerga o Brasil de um jeito que pouca gente enxerga.</p>
+      <button class="restart" id="restart">Voltar ao início</button>
+    </section>
+
+  </div>
+
+  <div class="tap-zone left" id="tapLeft"></div>
+  <div class="tap-zone right" id="tapRight"></div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  let current = 0;
+  let score = 0;
+  let answered = new Set();
+
+  // build progress segments
+  for (let i = 0; i < total; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.dataset.idx = i;
+    progress.appendChild(seg);
+  }
+  const segs = document.querySelectorAll('.seg');
+
+  function update() {
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'prev');
+      if (i === current) s.classList.add('active');
+      else if (i < current) s.classList.add('prev');
+    });
+    segs.forEach((s, i) => {
+      s.classList.remove('done', 'current');
+      if (i < current) s.classList.add('done');
+      else if (i === current) s.classList.add('current');
+    });
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+
+  function go(n) {
+    if (n < 0 || n >= total) return;
+    current = n;
+    update();
+  }
+
+  function next() { go(current + 1); }
+  function prev() { go(current - 1); }
+
+  document.getElementById('tapRight').addEventListener('click', next);
+  document.getElementById('tapLeft').addEventListener('click', prev);
+
+  // progress bar interactive
+  progress.addEventListener('click', (e) => {
+    const rect = progress.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const idx = Math.floor((x / rect.width) * total);
+    go(Math.max(0, Math.min(total - 1, idx)));
+  });
+
+  let dragging = false;
+  progress.addEventListener('touchstart', (e) => { dragging = true; handleDrag(e); });
+  progress.addEventListener('touchmove', (e) => { if (dragging) handleDrag(e); });
+  progress.addEventListener('touchend', () => { dragging = false; });
+  function handleDrag(e) {
+    const t = e.touches[0];
+    const rect = progress.getBoundingClientRect();
+    const x = t.clientX - rect.left;
+    const idx = Math.floor((x / rect.width) * total);
+    go(Math.max(0, Math.min(total - 1, idx)));
+  }
+
+  // swipe
+  let startX = 0, startY = 0;
+  document.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) next();
+      else prev();
+    }
+  });
+
+  // quiz
+  document.querySelectorAll('[data-quiz]').forEach(slide => {
+    const opts = slide.querySelectorAll('.option');
+    const fbRight = slide.querySelector('[data-fb="right"]');
+    const fbMiss = slide.querySelector('[data-fb="miss"]');
+    const qid = slide.dataset.quiz;
+
+    opts.forEach(opt => {
+      opt.addEventListener('click', () => {
+        if (answered.has(qid)) return;
+        answered.add(qid);
+        const correct = opt.dataset.correct === 'true';
+
+        opts.forEach(o => {
+          o.classList.add('disabled');
+          if (o.dataset.correct === 'true') o.classList.add('correct');
+        });
+
+        if (correct) {
+          score++;
+          fbRight.classList.add('show');
+        } else {
+          opt.classList.add('wrong');
+          const explainText = fbMiss.querySelector('[data-explain-text]');
+          if (explainText) explainText.textContent = opt.dataset.explain || '';
+          fbMiss.classList.add('show');
+        }
+      });
+    });
+  });
+
+  // end
+  document.getElementById('restart').addEventListener('click', () => {
+    score = 0;
+    answered.clear();
+    document.querySelectorAll('.option').forEach(o => {
+      o.classList.remove('correct', 'wrong', 'disabled');
+    });
+    document.querySelectorAll('.feedback').forEach(f => f.classList.remove('show'));
+    go(0);
+  });
+
+  // update score on entering end slide
+  const endSlide = document.querySelector('.end');
+  const observer = new MutationObserver(() => {
+    if (endSlide.classList.contains('active')) {
+      document.getElementById('score').textContent = score + '/6';
+      const msg = document.getElementById('end-msg');
+      if (score === 6) msg.textContent = 'Gabaritou. Você entendeu o DNA da política brasileira.';
+      else if (score >= 4) msg.textContent = 'Mandou bem. A base ficou.';
+      else if (score >= 2) msg.textContent = 'Dá uma revisada. Vale a pena.';
+      else msg.textContent = 'Sem stress. Volta e refaz a aula com calma.';
+    }
+  });
+  observer.observe(endSlide, { attributes: true, attributeFilter: ['class'] });
+
+  update();
+</script>
+
+</body>
+</html>
